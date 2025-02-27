@@ -15,11 +15,10 @@ A Python tool that downloads YouTube videos (typically music mixes) and automati
 
 - Python 3.11.x (might work with other python versions, not sure)
 - FFmpeg installed and available in system PATH
+- Redis docker image (for communication with other services)
 - Required Python packages (install via `pip install -r requirements.txt`):
   - pytubefix
   - Pillow
   - requests
+  - redis
 
-## Todo
-
-- Implement queue/messaging system for more robust processing

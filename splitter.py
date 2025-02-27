@@ -95,7 +95,7 @@ def split_track(audio: str, track: Track, thumbnail: str, output_folder = os.get
     
     # Execute ffmpeg command
     try:
-        subprocess.run(command, check=True, capture_output=True)
+        subprocess.run(command, capture_output=True)
     except subprocess.CalledProcessError as e:
         raise Exception(f"Failed to split track '{track.title}': ffmpeg command failed with return code {e.returncode}")
     except Exception as e:
@@ -140,7 +140,7 @@ def crop_thumbnail(thumbnail: str, output_folder = os.getcwd() + "\\temp_downloa
                 "-vf", crop_params,
                 "-c:a", "copy",
                 output_file
-            ], check=True, capture_output=True)
+            ], capture_output=True)
         except subprocess.CalledProcessError as e:
             print(f"Error cropping thumbnail: {e.stderr.decode()}")
             raise
