@@ -1,8 +1,9 @@
 import pytubefix
 import os
 import requests
+
 from track import Track
-from pytubefix.exceptions import RegexMatchError
+
 
 def download(video_url: str, download_audio_folder = os.getcwd() + "\\temp_download\\", 
              download_thumbnail_folder = os.getcwd() + "\\temp_download\\") -> tuple[str, str, list[Track]]:
@@ -40,6 +41,7 @@ def download(video_url: str, download_audio_folder = os.getcwd() + "\\temp_downl
         tracks.append(track)
     return (audio, thumbnail, tracks)
 
+
 def download_audio(video: pytubefix.YouTube, download_folder = os.getcwd() + "\\temp_download\\") -> str:
     """Downloads the audio stream from a YouTube video.
     
@@ -52,7 +54,7 @@ def download_audio(video: pytubefix.YouTube, download_folder = os.getcwd() + "\\
     """
     audio_stream = video.streams.get_audio_only()
     audio_stream.download(download_folder, "audio.mp3")
-    return download_folder + "audio.mp3"
+    return os.path.join(download_folder, "audio.mp3")
 
 
 def download_thumbnail(thumbnail_url: str, download_folder = os.getcwd() + "\\temp_download\\") -> str:
@@ -68,10 +70,10 @@ def download_thumbnail(thumbnail_url: str, download_folder = os.getcwd() + "\\te
     # Use requests to download the image.
     img_data = requests.get(thumbnail_url).content
     # Download it to a specific folder with a specific name.
-    with open((download_folder + "cover.jpeg"), 'wb') as handler:
+    with open(os.path.join(download_folder, "cover.jpeg"), 'wb') as handler:
         handler.write(img_data)
     # Return download location.
-    return (download_folder + "cover.jpeg")
+    return os.path.join(download_folder, "cover.jpeg")
 
 """Tests"""
 
@@ -111,6 +113,7 @@ def test_download():
     except Exception as e:
         print(f"Test failed: {str(e)}")
         raise
+    
 
 def test_download_audio():
     """Test the download_audio function."""
@@ -172,8 +175,10 @@ def test_download_thumbnail():
         print(f"Test failed: {str(e)}")
         raise
 
+
 def main():
     download('https://www.youtube.com/watch?v=KVmtUWJmbNs')
+    
 
 if __name__ == '__main__':
     test_download()

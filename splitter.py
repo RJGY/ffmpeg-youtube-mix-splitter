@@ -72,7 +72,7 @@ def split_track(audio: str, track: Track, thumbnail: str, output_folder = os.get
     else:
         track_name = track.title.strip()
         artist = track_name
-    output_file = f"{output_folder}{track.title.strip()}.mp3"
+    output_file = os.path.join(output_folder, f"{track.title.strip()}.mp3")
     
     # Build ffmpeg command to extract the segment and add metadata
     command = [
@@ -122,7 +122,7 @@ def crop_thumbnail(thumbnail: str, output_folder = os.getcwd() + "\\temp_downloa
     
     ratio = width / height
 
-    output_file = output_folder + "new_cover.jpeg"
+    output_file = os.path.join(output_folder, "new_cover.jpeg")
     
     if ratio > 1:
         # Image is wider than 16:9

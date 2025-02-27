@@ -1,15 +1,19 @@
 import os
 import json
 import asyncio
+from dotenv import load_dotenv
 
 from splitter import split
 from download import download
 from redis_pub_sub import RedisSubscriber, RedisPublisher
 
-# Keep your existing path definitions
-thumbnail_folder = os.getcwd() + '\\temp_download\\'
-output_folder = os.getcwd() + '\\output\\'
-publisher = RedisPublisher(channel='mix_processing_finished')
+
+# Load environment variables from .env file
+load_dotenv()
+
+thumbnail_folder = os.getenv('THUMBNAIL_FOLDER', os.path.join(os.getcwd(), 'temp_download'))
+output_folder = os.getenv('OUTPUT_FOLDER', os.path.join(os.getcwd(), 'output'))
+publisher = RedisPublisher(channel=os.getenv('REDIS_PUBLISH_CHANNEL', 'mix_processing_finished'))
 
 def process_message(message: dict) -> None:
     """Handle incoming Redis messages."""
