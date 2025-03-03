@@ -29,14 +29,14 @@ def process_message(message: dict) -> None:
             return
 
         print(f"Processing video: {video_url}")
-        asyncio.run(process_video(video_url))
+        asyncio.to_thread(process_video(video_url))
 
     except json.JSONDecodeError:
         print(f"Error: Invalid JSON message received: {message['data']}")
     except Exception as e:
         print(f"Error processing message: {str(e)}")
 
-async def process_video(video_url: str) -> None:
+def process_video(video_url: str) -> None:
     """Download and split the video."""
     try:
         # Download the video and get necessary data

@@ -47,14 +47,14 @@ def merge_duplicate_tracks(tracks: list[Track]) -> list[Track]:
     # Convert dictionary values back to list
     return list(merged.values())
 
-def split_track(audio: str, track: Track, thumbnail: str, output_folder = os.getcwd() + "\\temp_download\\") -> str:
+def split_track(audio: str, track: Track, thumbnail: str, output_folder = os.path.join(os.getcwd(), "temp_download")) -> str:
     """Split an audio file into a single track with metadata.
     
     Args:
         audio (str): Path to the input audio file
         track (Track): Track object containing title, start time and duration
         thumbnail (str): Path to the album art image file
-        output_folder (str, optional): Directory to save output file. Defaults to current directory + "\\temp_download\\"
+        output_folder (str, optional): Directory to save output file. Defaults to current directory + "temp_download"
         
     Returns:
         str: Path to the output mp3 file
@@ -103,12 +103,12 @@ def split_track(audio: str, track: Track, thumbnail: str, output_folder = os.get
     
     return output_file
 
-def crop_thumbnail(thumbnail: str, output_folder = os.getcwd() + "\\temp_download\\"):
+def crop_thumbnail(thumbnail: str, output_folder = os.path.join(os.getcwd(), "temp_download")):
     """Crops the thumbnail from the YouTube video to a 16:9 aspect ratio.
     
     Args:
         thumbnail (str): Path to the input thumbnail image file
-        output_folder (str, optional): Directory to save cropped thumbnail. Defaults to current directory + "\\temp_download\\"
+        output_folder (str, optional): Directory to save cropped thumbnail. Defaults to current directory + "temp_download"
         
     Returns:
         str: Path to the cropped thumbnail file
@@ -167,15 +167,15 @@ def crop_thumbnail(thumbnail: str, output_folder = os.getcwd() + "\\temp_downloa
 
     return output_file
     
-def split(audio: str, thumbnail: str, tracks: list[Track], thumbnail_folder = os.getcwd() +"\\temp_download\\", output_folder = os.getcwd() +"\\temp_download\\") -> str:
+def split(audio: str, thumbnail: str, tracks: list[Track], thumbnail_folder = os.path.join(os.getcwd(), "temp_download"), output_folder = os.path.join(os.getcwd(), "temp_download")) -> str:
     """Split an audio file into multiple tracks with metadata.
     
     Args:
         audio (str): Path to the input audio file
         thumbnail (str): Path to the album art image file
         tracks (list[Track]): List of Track objects containing title, start time and duration
-        thumbnail_folder (str, optional): Directory to save the cropped thumbnail. Defaults to current directory + "\\temp_download\\"
-        output_folder (str, optional): Directory to save output files. Defaults to current directory + "\\temp_download\\"
+        thumbnail_folder (str, optional): Directory to save the cropped thumbnail. Defaults to current directory + "temp_download"
+        output_folder (str, optional): Directory to save output files. Defaults to current directory + "temp_download"
         
     Returns:
         list[str]: List of paths to the output mp3 files

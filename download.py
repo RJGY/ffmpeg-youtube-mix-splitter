@@ -5,14 +5,14 @@ import requests
 from track import Track
 
 
-def download(video_url: str, download_audio_folder = os.getcwd() + "\\temp_download\\", 
-             download_thumbnail_folder = os.getcwd() + "\\temp_download\\") -> tuple[str, str, list[Track]]:
+def download(video_url: str, download_audio_folder = os.path.join(os.getcwd(), "temp_download"), 
+             download_thumbnail_folder = os.path.join(os.getcwd(), "temp_download")) -> tuple[str, str, list[Track]]:
     """Downloads a YouTube video's audio and thumbnail.
     
     Args:
         video_url (str): The URL of the YouTube video to download
-        download_audio_folder (str, optional): Path where the audio file will be saved. Defaults to "\temp_download\"
-        download_thumbnail_folder (str, optional): Path where the thumbnail will be saved. Defaults to "\temp_download\
+        download_audio_folder (str, optional): Path where the audio file will be saved. Defaults to "temp_download"
+        download_thumbnail_folder (str, optional): Path where the thumbnail will be saved. Defaults to "temp_download"
         
     Returns:
         tuple[str, str, list[track.Track]]: A tuple containing:
@@ -42,7 +42,7 @@ def download(video_url: str, download_audio_folder = os.getcwd() + "\\temp_downl
     return (audio, thumbnail, tracks)
 
 
-def download_audio(video: pytubefix.YouTube, download_folder = os.getcwd() + "\\temp_download\\") -> str:
+def download_audio(video: pytubefix.YouTube, download_folder = os.path.join(os.getcwd(), "temp_download")) -> str:
     """Downloads the audio stream from a YouTube video.
     
     Args:
@@ -57,7 +57,7 @@ def download_audio(video: pytubefix.YouTube, download_folder = os.getcwd() + "\\
     return os.path.join(download_folder, "audio.mp3")
 
 
-def download_thumbnail(thumbnail_url: str, download_folder = os.getcwd() + "\\temp_download\\") -> str:
+def download_thumbnail(thumbnail_url: str, download_folder = os.path.join(os.getcwd(), "temp_download")) -> str:
     """Downloads a thumbnail image from a YouTube video.
     
     Args:
@@ -119,7 +119,7 @@ def test_download_audio():
     """Test the download_audio function."""
     # Test with a known video URL
     test_video_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-    download_path = os.getcwd() + "\\test_downloads\\"
+    download_path = os.path.join(os.getcwd(), "temp_download")
     test_video = pytubefix.YouTube(test_video_url)
     
     try:
