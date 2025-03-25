@@ -2,6 +2,7 @@ import os
 import subprocess
 import wave
 import struct
+import re
 
 from PIL import Image
 from track import Track
@@ -63,16 +64,21 @@ def split_track(audio: str, track: Track, thumbnail: str, output_folder = os.pat
         Exception: If ffmpeg command fails
     """
     # Create output filename from track title
-    if " - " in track.title:
-        track_name = track.title.split(" - ", 1)[1].strip()
-        artist = track.title.split(" - ", 1)[0].strip()
-    elif " | " in track.title:
-        track_name = track.title.split(" | ", 1)[1].strip()
-        artist = track.title.split(" | ", 1)[0].strip()
+    # Also remove crap from the start of the file. We want to remove 01. or things
+    # similar to that
+    pattern = r'^\d+\.?\s*'
+    artist_and_track = re.sub(pattern, '', track.title)
+
+    if " - " in artist_and_track:
+        track_name = artist_and_track.split(" - ", 1)[1].strip()
+        artist = artist_and_track.split(" - ", 1)[0].strip()
+    elif " | " in artist_and_track:
+        track_name = artist_and_track.split(" | ", 1)[1].strip()
+        artist = artist_and_track.split(" | ", 1)[0].strip()
     else:
-        track_name = track.title.strip()
+        track_name = artist_and_track
         artist = track_name
-    output_file = os.path.join(output_folder, f"{track.title.strip()}.mp3")
+    output_file = os.path.join(output_folder, f"{artist_and_track.strip()}.mp3")
     
     # Build ffmpeg command to extract the segment and add metadata
     command = [
