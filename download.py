@@ -24,7 +24,7 @@ def download(video_url: str, download_audio_folder = os.path.join(os.getcwd(), "
         Exception: If the provided URL is invalid
     """
     try:
-        video = pytubefix.YouTube(video_url, 'WEB')
+        video = pytubefix.YouTube(video_url)
     except pytubefix.exceptions.RegexMatchError:
         raise Exception("Invalid URL")
     

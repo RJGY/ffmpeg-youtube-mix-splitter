@@ -66,5 +66,13 @@ def main():
     # Start listening for messages
     subscriber.subscribe(callback=process_message)
 
+def manual_download(video_url):
+    # Download the video and get necessary data
+    audio, thumbnail, tracks = download(video_url)
+    
+    # Split the audio
+    songs = split(audio, thumbnail, tracks, thumbnail_folder, output_folder)
+
 if __name__ == '__main__':
     main()
+    # manual_download('https://www.youtube.com/watch?v=FOxIFxW_-a4')
