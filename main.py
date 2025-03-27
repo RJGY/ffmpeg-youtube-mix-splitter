@@ -23,27 +23,36 @@ def process_message(message: dict) -> None:
     try:
         data = json.loads(message['data'])
         video_url = data.get('video_url')
+        location = data.get('location')
         
         if not video_url:
             print("Error: No video URL provided in message")
             return
 
         print(f"Processing video: {video_url}")
-        asyncio.to_thread(process_video(video_url))
+        print(f"Location: {location}")
+        asyncio.to_thread(process_video(video_url, location))
 
     except json.JSONDecodeError:
         print(f"Error: Invalid JSON message received: {message['data']}")
     except Exception as e:
         print(f"Error processing message: {str(e)}")
 
-def process_video(video_url: str) -> None:
+def process_video(video_url: str, location: str) -> None:
     """Download and split the video."""
     try:
         # Download the video and get necessary data
         audio, thumbnail, tracks = download(video_url)
-        
+
+        # Extra thing so we can download to other folders
+        new_location = output_folder
+        if location:
+            base_folder = os.path.dirname(new_location)
+            new_location = os.path.join(base_folder, location)
+
+        print(f"New Location: {new_location}")
         # Split the audio
-        songs = split(audio, thumbnail, tracks, thumbnail_folder, output_folder)
+        songs = split(audio, thumbnail, tracks, thumbnail_folder, new_location)
         
         print(f"Successfully processed video. Output songs: {songs}")
         publisher.publish({
@@ -66,13 +75,19 @@ def main():
     # Start listening for messages
     subscriber.subscribe(callback=process_message)
 
-def manual_download(video_url):
+def manual_download(video_url, location):
     # Download the video and get necessary data
     audio, thumbnail, tracks = download(video_url)
+
+    # Extra thing so we can download to other folders
+    new_location = output_folder
+    if location:
+        base_folder = os.path.dirname(new_location)
+        new_location = os.path.join(base_folder, location)
     
     # Split the audio
-    songs = split(audio, thumbnail, tracks, thumbnail_folder, output_folder)
+    songs = split(audio, thumbnail, tracks, thumbnail_folder, new_location)
 
 if __name__ == '__main__':
-    main()
-    # manual_download('https://www.youtube.com/watch?v=FOxIFxW_-a4')
+    # main()
+    manual_download('https://www.youtube.com/watch?v=FOxIFxW_-a4', "balls")
