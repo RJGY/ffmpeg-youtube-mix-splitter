@@ -46,8 +46,10 @@ def process_video(video_url: str, location: str) -> None:
 
         # Extra thing so we can download to other folders
         new_location = output_folder
+        print(f"Old Location: {output_folder}")
         if location:
-            base_folder = os.path.dirname(new_location)
+            base_folder = os.path.abspath(os.path.join(output_folder, os.pardir))
+            print(f"Base Folder: {base_folder}")
             new_location = os.path.join(base_folder, location)
 
         print(f"New Location: {new_location}")
