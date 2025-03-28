@@ -46,7 +46,15 @@ def merge_duplicate_tracks(tracks: list[Track]) -> list[Track]:
             merged[track.title] = track
             
     # Convert dictionary values back to list
-    return list(merged.values())
+    tracks = list(merged.values())
+
+    # Also remove crap from the start of the file. We want to remove 01. or things similar to that
+    pattern = r'^\d+\.?\s*'
+    for track in tracks:
+        track.title = re.sub(pattern, '', track.title)
+    
+    return tracks
+
 
 def split_track(audio: str, track: Track, thumbnail: str, output_folder = os.path.join(os.getcwd(), "temp_download")) -> str:
     """Split an audio file into a single track with metadata.
@@ -64,21 +72,18 @@ def split_track(audio: str, track: Track, thumbnail: str, output_folder = os.pat
         Exception: If ffmpeg command fails
     """
     # Create output filename from track title
-    # Also remove crap from the start of the file. We want to remove 01. or things
-    # similar to that
-    pattern = r'^\d+\.?\s*'
-    artist_and_track = re.sub(pattern, '', track.title)
+    track_title = track.title
 
-    if " - " in artist_and_track:
-        track_name = artist_and_track.split(" - ", 1)[1].strip()
-        artist = artist_and_track.split(" - ", 1)[0].strip()
-    elif " | " in artist_and_track:
-        track_name = artist_and_track.split(" | ", 1)[1].strip()
-        artist = artist_and_track.split(" | ", 1)[0].strip()
+    if " - " in track_title:
+        track_name = track_title.split(" - ", 1)[1].strip()
+        artist = track_title.split(" - ", 1)[0].strip()
+    elif " | " in track_title:
+        track_name = track_title.split(" | ", 1)[1].strip()
+        artist = track_title.split(" | ", 1)[0].strip()
     else:
-        track_name = artist_and_track
+        track_name = track_title
         artist = track_name
-    output_file = os.path.join(output_folder, f"{artist_and_track.strip()}.mp3")
+    output_file = os.path.join(output_folder, f"{track_title.strip()}.mp3")
     
     # Build ffmpeg command to extract the segment and add metadata
     command = [
@@ -193,6 +198,7 @@ def split(audio: str, thumbnail: str, tracks: list[Track], thumbnail_folder = os
         raise Exception("ffmpeg is not available on the system")
     
     tracks = merge_duplicate_tracks(tracks)
+    tracks = check_tracks(tracks, output_folder)
     thumbnail = crop_thumbnail(thumbnail, thumbnail_folder)
 
     songs = []
@@ -202,6 +208,53 @@ def split(audio: str, thumbnail: str, tracks: list[Track], thumbnail_folder = os
         songs.append(song)
 
     return songs
+
+def check_tracks(tracks: list[Track], output_folder: str) -> list[Track]:
+    """Check if there is a songs.txt file in the output folder and return filtered tracks.
+    If the file doesn't exist, create it with current songs in the folder.
+    Then append any new songs that will be processed.
+    
+    Args:
+        tracks (list[Track]): List of Track objects to check
+        output_folder (str): Directory to check for songs.txt
+        
+    Returns:
+        list[Track]: List of tracks that haven't been processed yet
+    """
+    songs_file = os.path.join(output_folder, "songs.txt")
+    
+    # If songs.txt doesn't exist, create it with current songs in the folder
+    if not os.path.exists(songs_file):
+        # Get all MP3 files in the output folder
+        existing_songs = set()
+        for file in os.listdir(output_folder):
+            if file.endswith('.mp3'):
+                # Remove the .mp3 extension to get the song title
+                song_title = os.path.splitext(file)[0]
+                existing_songs.add(song_title)
+        
+        # Write existing songs to the file
+        if existing_songs:
+            with open(songs_file, 'w', encoding='utf-8') as f:
+                for song in existing_songs:
+                    f.write(f"{song}\n")
+    
+    # Read processed songs from file (whether it existed before or we just created it)
+    processed_songs = set()
+    if os.path.exists(songs_file):
+        with open(songs_file, 'r', encoding='utf-8') as f:
+            processed_songs = set(line.strip() for line in f)
+        
+    # Filter out tracks that have already been processed
+    new_tracks = [track for track in tracks if track.title not in processed_songs]
+    
+    # Append new tracks to the songs file
+    if new_tracks:
+        with open(songs_file, 'a', encoding='utf-8') as f:
+            for track in new_tracks:
+                f.write(f"{track.title}\n")
+    
+    return new_tracks
         
     
 

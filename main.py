@@ -77,7 +77,7 @@ def main():
     # Start listening for messages
     subscriber.subscribe(callback=process_message)
 
-def manual_download(video_url, location):
+def manual_download(video_url, location = None):
     # Download the video and get necessary data
     audio, thumbnail, tracks = download(video_url)
 
@@ -92,4 +92,4 @@ def manual_download(video_url, location):
 
 if __name__ == '__main__':
     main()
-    # manual_download('https://www.youtube.com/watch?v=FOxIFxW_-a4', "balls")
+    # manual_download('https://www.youtube.com/watch?v=FOxIFxW_-a4')
