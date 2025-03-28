@@ -53,6 +53,10 @@ def process_video(video_url: str, location: str) -> None:
             new_location = os.path.join(base_folder, location)
 
         print(f"New Location: {new_location}")
+
+        # Ensure the output directory exists
+        os.makedirs(new_location, exist_ok=True)
+
         # Split the audio
         songs = split(audio, thumbnail, tracks, thumbnail_folder, new_location)
         
@@ -87,9 +91,12 @@ def manual_download(video_url, location = None):
         base_folder = os.path.dirname(new_location)
         new_location = os.path.join(base_folder, location)
     
+    # Ensure the output directory exists
+    os.makedirs(new_location, exist_ok=True)
+    
     # Split the audio
     songs = split(audio, thumbnail, tracks, thumbnail_folder, new_location)
 
 if __name__ == '__main__':
-    main()
-    # manual_download('https://www.youtube.com/watch?v=FOxIFxW_-a4')
+    # main()
+    manual_download('https://www.youtube.com/watch?v=FOxIFxW_-a4', 'balls')
