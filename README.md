@@ -4,12 +4,13 @@ A Python tool that downloads YouTube videos (typically music mixes) and automati
 
 ## Features
 
-- Downloads audio from YouTube videos.
 - Extracts chapter information to split tracks.
 - Adds metadata (artist, title) to split tracks.
+- Downloads audio from extracted metadata to find original audio.
+- Downloads audio from YouTube videos if original audio does not exist.
 - Downloads and crops video thumbnails for album art.
-- Handles duplicate track names for repeat songs.
-- Handle duplicate tracks which may already exist in folder.
+- Handles duplicate track names for repeat songs within mix.
+- Handle duplicate tracks which may already exist in folder that we download to.
 - Supports various title formats (Artist - Title, Artist | Title).
 
 ## Prerequisites

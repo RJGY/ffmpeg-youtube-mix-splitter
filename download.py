@@ -5,8 +5,8 @@ import requests
 from track import Track
 
 
-def download(video_url: str, download_audio_folder = os.path.join(os.getcwd(), "temp_download"), 
-             download_thumbnail_folder = os.path.join(os.getcwd(), "temp_download")) -> tuple[str, str, list[Track]]:
+def download(video_url: str, audio_output_folder = os.path.join(os.getcwd(), "temp_download"), 
+             thumbnail_output_folder = os.path.join(os.getcwd(), "temp_download")) -> tuple[str, str, list[Track]]:
     """Downloads a YouTube video's audio and thumbnail.
     
     Args:
@@ -24,15 +24,15 @@ def download(video_url: str, download_audio_folder = os.path.join(os.getcwd(), "
         Exception: If the provided URL is invalid
     """
     try:
-        video = pytubefix.YouTube(video_url)
+        video = pytubefix.YouTube(video_url, 'WEB')
     except pytubefix.exceptions.RegexMatchError:
         raise Exception("Invalid URL")
     
-    os.makedirs(download_audio_folder, exist_ok=True)
-    os.makedirs(download_thumbnail_folder, exist_ok=True)
+    os.makedirs(audio_output_folder, exist_ok=True)
+    os.makedirs(thumbnail_output_folder, exist_ok=True)
     
-    audio = download_audio(video, download_audio_folder)
-    thumbnail = download_thumbnail(video.thumbnail_url, download_thumbnail_folder)
+    audio = download_audio(video, audio_output_folder)
+    thumbnail = download_thumbnail(video.thumbnail_url, thumbnail_output_folder)
     video_chapters = video.chapters
 
     tracks = []
@@ -42,7 +42,7 @@ def download(video_url: str, download_audio_folder = os.path.join(os.getcwd(), "
     return (audio, thumbnail, tracks)
 
 
-def download_audio(video: pytubefix.YouTube, download_folder = os.path.join(os.getcwd(), "temp_download")) -> str:
+def download_audio(video: pytubefix.YouTube, output_folder = os.path.join(os.getcwd(), "temp_download")) -> str:
     """Downloads the audio stream from a YouTube video.
     
     Args:
@@ -53,11 +53,11 @@ def download_audio(video: pytubefix.YouTube, download_folder = os.path.join(os.g
         str: Path to the downloaded audio file
     """
     audio_stream = video.streams.get_audio_only()
-    audio_stream.download(download_folder, "audio.mp3")
-    return os.path.join(download_folder, "audio.mp3")
+    audio_stream.download(output_folder, "audio.mp3")
+    return os.path.join(output_folder, "audio.mp3")
 
 
-def download_thumbnail(thumbnail_url: str, download_folder = os.path.join(os.getcwd(), "temp_download")) -> str:
+def download_thumbnail(thumbnail_url: str, output_folder = os.path.join(os.getcwd(), "temp_download")) -> str:
     """Downloads a thumbnail image from a YouTube video.
     
     Args:
@@ -70,10 +70,10 @@ def download_thumbnail(thumbnail_url: str, download_folder = os.path.join(os.get
     # Use requests to download the image.
     img_data = requests.get(thumbnail_url).content
     # Download it to a specific folder with a specific name.
-    with open(os.path.join(download_folder, "cover.jpeg"), 'wb') as handler:
+    with open(os.path.join(output_folder, "cover.jpeg"), 'wb') as handler:
         handler.write(img_data)
     # Return download location.
-    return os.path.join(download_folder, "cover.jpeg")
+    return os.path.join(output_folder, "cover.jpeg")
 
 """Tests"""
 

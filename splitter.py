@@ -4,8 +4,13 @@ import wave
 import struct
 import re
 
+from difflib import SequenceMatcher
+
 from PIL import Image
 from track import Track
+from pytubefix import Search
+
+from download import download_audio, download_thumbnail
 
 def check_ffmpeg() -> bool:
     """Checks if ffmpeg is available on the system.
@@ -178,7 +183,7 @@ def crop_thumbnail(thumbnail: str, output_folder = os.path.join(os.getcwd(), "te
 
     return output_file
     
-def split(audio: str, thumbnail: str, tracks: list[Track], thumbnail_folder = os.path.join(os.getcwd(), "temp_download"), output_folder = os.path.join(os.getcwd(), "temp_download")) -> str:
+def split(audio: str, thumbnail: str, tracks: list[Track], temp_folder = os.path.join(os.getcwd(), "temp_download"), output_folder = os.path.join(os.getcwd(), "temp_download")) -> str:
     """Split an audio file into multiple tracks with metadata.
     
     Args:
@@ -199,15 +204,79 @@ def split(audio: str, thumbnail: str, tracks: list[Track], thumbnail_folder = os
     
     tracks = merge_duplicate_tracks(tracks)
     tracks = check_tracks(tracks, output_folder)
-    thumbnail = crop_thumbnail(thumbnail, thumbnail_folder)
+    thumbnail = crop_thumbnail(thumbnail, temp_folder)
 
     songs = []
 
     for track in tracks:
-        song = split_track(audio, track, thumbnail, output_folder)
+        song = get_youtube_track(track, temp_folder, output_folder)
+        if not song:
+            song = split_track(audio, track, thumbnail, output_folder)
         songs.append(song)
 
     return songs
+
+
+def get_youtube_track(track: Track, temp_folder = os.path.join(os.getcwd(), "temp_download"), output_folder = os.path.join(os.getcwd(), "temp_download")) -> str:
+    results = Search(track.title).videos
+    arr = []
+    for i in range(5):
+        similarity = SequenceMatcher(None, results[i].title, track.title).ratio()
+        arr.append((results[i], similarity))
+    
+    arr = sorted(arr, key=lambda x: x[1])
+
+    result = arr[-1][0]
+    similarity = arr[-1][1]
+
+    if similarity < 0.6:
+        return
+    
+    audio = download_audio(result, temp_folder)
+    thumbnail = download_thumbnail(result.thumbnail_url, temp_folder)
+    thumbnail = crop_thumbnail(thumbnail, temp_folder)
+
+    # Create output filename from track title
+    track_title = result.title
+
+    if " - " in track_title:
+        track_name = track_title.split(" - ", 1)[1].strip()
+        artist = track_title.split(" - ", 1)[0].strip()
+    elif " | " in track_title:
+        track_name = track_title.split(" | ", 1)[1].strip()
+        artist = track_title.split(" | ", 1)[0].strip()
+    else:
+        track_name = track_title
+        artist = track_name
+    output_file = os.path.join(output_folder, f"{track_title.strip()}.mp3")
+    
+    # Build ffmpeg command to extract the segment and add metadata
+    command = [
+        'ffmpeg',
+        '-y', # Always overwrite
+        '-i', audio,  # Input file
+        '-i', thumbnail,  # Album art file
+        '-c:a', 'libmp3lame',  # Copy without re-encoding
+        '-map', '0:a:0',  # Map the first audio stream
+        '-map', '1:0',  # Map the album art
+        '-map_metadata', '-1',  # Remove existing metadata
+        '-metadata', f'title={track_name}',  # Add title metadata
+        '-metadata', f'artist={artist}',  # Add artist metadata
+        '-id3v2_version', '3',  # Use ID3v2.3 format
+        '-f', 'mp3', # Specify mp3
+        output_file
+    ]
+    
+    # Execute ffmpeg command
+    try:
+        subprocess.run(command, capture_output=True)
+    except subprocess.CalledProcessError as e:
+        raise Exception(f"Failed to split track '{track.title}': ffmpeg command failed with return code {e.returncode}")
+    except Exception as e:
+        raise Exception(f"Failed to split track '{track.title}': {str(e)}")
+    
+    return output_file
+
 
 def check_tracks(tracks: list[Track], output_folder: str) -> list[Track]:
     """Check if there is a songs.txt file in the output folder and return filtered tracks.
@@ -441,8 +510,68 @@ def test_split():
         print(f"Test failed: {str(e)}")
         raise
 
+def test_check_tracks():
+    """Test the check_tracks function."""
+    try:
+        # Create test directory and files
+        test_dir = os.path.join(os.getcwd(), "test", "output")
+        os.makedirs(test_dir, exist_ok=True)
+        songs_file = os.path.join(test_dir, "songs.txt")
+        
+        # Create some test MP3 files
+        existing_songs = ["Existing Song 1", "Existing Song 2"]
+        for song in existing_songs:
+            with open(os.path.join(test_dir, f"{song}.mp3"), 'w') as f:
+                f.write("dummy content")
+        
+        # Test case 1: First run without songs.txt
+        if os.path.exists(songs_file):
+            os.remove(songs_file)
+            
+        tracks = [
+            Track("Existing Song 1", 0, 60),
+            Track("New Song 1", 60, 60),
+            Track("New Song 2", 120, 60)
+        ]
+        
+        result = check_tracks(tracks, test_dir)
+        
+        # Verify songs.txt was created and contains existing songs
+        assert os.path.exists(songs_file), "songs.txt should be created"
+        with open(songs_file, 'r', encoding='utf-8') as f:
+            processed_songs = set(line.strip() for line in f)
+        assert "Existing Song 1" in processed_songs, "Existing song should be in songs.txt"
+        assert "New Song 1" in processed_songs, "New song should be added to songs.txt"
+        
+        # Verify only new songs are returned
+        assert len(result) == 2, "Should return only new songs"
+        assert all(track.title not in existing_songs for track in result), "Should not return existing songs"
+        
+        # Test case 2: Second run with existing songs.txt
+        new_tracks = [
+            Track("New Song 1", 0, 60),  # Already in songs.txt
+            Track("New Song 3", 60, 60)  # Actually new
+        ]
+        
+        result = check_tracks(new_tracks, test_dir)
+        
+        # Verify only the actually new song is returned
+        assert len(result) == 1, "Should return only the new song"
+        assert result[0].title == "New Song 3", "Should return correct new song"
+        
+        # Clean up
+        os.remove(songs_file)
+        for song in existing_songs:
+            os.remove(os.path.join(test_dir, f"{song}.mp3"))
+        
+        print("check_tracks test passed successfully!")
+        
+    except Exception as e:
+        print(f"Test failed: {str(e)}")
+        raise
+
 def main():
-    pass
+    get_youtube_track(Track('Benlon, Pop Mage - Memories', 0, 0))
 
 if __name__ == "__main__":
     test_check_ffmpeg()
@@ -450,3 +579,6 @@ if __name__ == "__main__":
     test_split_track()
     test_crop_thumbnail()
     test_split()
+    test_check_tracks()
+
+    main()

@@ -1,0 +1,8 @@
+from difflib import SequenceMatcher
+
+def similar(a, b):
+    return SequenceMatcher(None, a, b).ratio()
+
+gonna need this to be able to see how similar a video is compared to the title? if its like 60% similar then send it i guess???
+maybe a better scoring system like if its a longer titled video can be less strict but shorter need to be stricter???
+
