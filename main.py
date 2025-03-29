@@ -98,5 +98,5 @@ def manual_download(video_url, location = None):
     songs = split(audio, thumbnail, tracks, thumbnail_folder, new_location)
 
 if __name__ == '__main__':
-    # main()
-    manual_download('https://www.youtube.com/watch?v=FOxIFxW_-a4', 'balls')
+    main()
+    # manual_download('https://www.youtube.com/watch?v=FOxIFxW_-a4', 'balls')
