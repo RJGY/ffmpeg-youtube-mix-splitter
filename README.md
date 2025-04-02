@@ -89,10 +89,6 @@ The application can be configured using environment variables in a `.env` file:
 4. Processed tracks are saved to the output directory
 5. A completion message is published to Redis (in microservice mode)
 
-## License
-
-[Your License Here]
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
