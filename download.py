@@ -23,8 +23,9 @@ def download(video_url: str, audio_output_folder = os.path.join(os.getcwd(), "te
     Raises:
         Exception: If the provided URL is invalid
     """
+    print(f"Downloading video: {video_url}")
     try:
-        video = pytubefix.YouTube(video_url, 'WEB')
+        video = pytubefix.YouTube(video_url)
     except pytubefix.exceptions.RegexMatchError:
         raise Exception("Invalid URL")
     
@@ -39,6 +40,7 @@ def download(video_url: str, audio_output_folder = os.path.join(os.getcwd(), "te
     for chapter in video_chapters:
         track = Track(chapter.title, chapter.start_seconds, chapter.duration)
         tracks.append(track)
+
     return (audio, thumbnail, tracks)
 
 
