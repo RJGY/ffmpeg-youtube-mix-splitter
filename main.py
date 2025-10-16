@@ -1,7 +1,9 @@
 import os
 import json
 import asyncio
+from aiohttp import web
 from dotenv import load_dotenv
+import threading
 
 from splitter import split
 from download import download
@@ -31,7 +33,8 @@ def process_message(message: dict) -> None:
 
         print(f"Processing video: {video_url}")
         print(f"Location: {location}")
-        asyncio.to_thread(process_video(video_url, location))
+        # Run processing in a background thread (callback is invoked outside the asyncio loop)
+        threading.Thread(target=process_video, args=(video_url, location), daemon=True).start()
 
     except json.JSONDecodeError:
         print(f"Error: Invalid JSON message received: {message['data']}")
@@ -69,6 +72,28 @@ def process_video(video_url: str, location: str) -> None:
     except Exception as e:
         print(f"Error processing video {video_url}: {str(e)}")
 
+async def health_check(request):
+    return web.Response(text="ok")
+
+async def start_web_app():
+    app = web.Application()
+    app.router.add_get("/health", health_check)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    # Ensure the port is a valid integer; default to 8080 if not provided/invalid
+    port_str = os.getenv("HEALTH_CHECK_PORT", "8080")
+    try:
+        port = int(port_str)
+    except (TypeError, ValueError):
+        port = 8080
+        print("HEALTH_CHECK_PORT is invalid; defaulting to 8080")
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    print(f"Health check server running on port {port}")
+    # Keep the server running
+    stop = asyncio.Event()
+    await stop.wait()
+
 def main():
     # Ensure directories exist
     os.makedirs(thumbnail_folder, exist_ok=True)
@@ -77,9 +102,17 @@ def main():
     # Initialize Redis subscriber
     subscriber = RedisSubscriber(channel='mix_processing')
     print(f"Starting audio processor. Listening on channel: {subscriber.channel}")
-    
-    # Start listening for messages
-    subscriber.subscribe(callback=process_message)
+
+    # Start Redis subscriber in a background thread (blocking loop)
+    subscriber_thread = threading.Thread(
+        target=subscriber.subscribe,
+        kwargs={"callback": process_message},
+        daemon=True,
+    )
+    subscriber_thread.start()
+
+    # Run the aiohttp web app on the main thread (keeps process alive)
+    asyncio.run(start_web_app())
 
 def manual_download(video_url, location = None):
     # Download the video and get necessary data
